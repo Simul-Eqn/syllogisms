@@ -1,0 +1,8 @@
+1 A B
+4 B C
+2 C D
+3 D A
+eval 3
+2 A C
+4 A C
+1 AB A
