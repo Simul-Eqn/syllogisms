@@ -109,6 +109,7 @@ def get_2to1_syllogism(n):
     inputs.append(getOneSyllogism(n, "B", "C"))
     return (inputs, res_syllogism) 
 
+
 def get_nto1_syllogism(n, v): # n is the number, v is which one 
     if (n<2): raise ValueError("ERROR, N IS LESS THAN 2") 
     inputs = []

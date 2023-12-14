@@ -1,13 +1,16 @@
 import numpy as np
 from sys import stdin, stdout
+from pyvenn import venn 
 import caseGenerator
 
+# to make it global scope, for visualization 
 solve = []
 varnames = []
 
 
 # uncomment the following line when no longer testing 
-def print(*args): pass 
+#def print(*args): pass 
+
 
 
 def genQuery(varnames, syllogism, value1, value2, values=None):
@@ -141,6 +144,8 @@ def process_single_syllogism(inputs, varnames):
 
     return (solve, errors, existances) 
 
+
+
 def eval_single_syllogism(inputs, res_syllogism):
     global solve, varnames #so that ez debug yes 
 
@@ -170,10 +175,13 @@ def eval_single_syllogism(inputs, res_syllogism):
     
     if res:
         stdout.write("This syllogism is definitely true. \n\n\n")
+        return 1 
     elif antires:
         stdout.write("This syllogism is definitely false. \n\n\n")
+        return -1 
     else:
         stdout.write("This syllogism may be true or false. \n\n") 
+        return 0 
 
 
 
@@ -256,6 +264,22 @@ def eval_res(solve, varnames, res_syllogism, errors, existances):
     
     return (res, antires) 
 
+def show_visualization(solve, varnames): 
+    labels = {}
+
+    # add labels 
+    for bitmask in range(2**len(varnames)):
+        vals = [(bitmask>>i)%2 for i in range(len(varnames))]
+        key = ""
+        for val in vals:
+            key += str(val)
+        value = str(eval(genQuery(varnames, (-1,-1,-1), -1, -1, vals)))
+        labels[key] = value 
+
+    # get visualization 
+    fig, ax = venn.venn4(labels, varnames) 
+    fig.show() 
+
 
 
 if __name__ == "__main__": 
@@ -265,10 +289,12 @@ if __name__ == "__main__":
         stdout.write(
     """MENU:
 1) AUTOTEST SYLLOGISM LIST 
-2) EVALUATE 2-TO-1 SYLLOGISM BY NUMBER 
+2) EVALUATE N-TO-1 CHAIN SYLLOGISM BY NUMBER 
 3) EVALUATE SYLLOGISM (MANUAL)
 4) GENERATE TRUE, FALSE, MAYBE SYLLOGISMS (MANUAL)
-5) DISPLAY SYLLOGISM MEANINGS
+5) N-TO-1 CHAIN SYLLOGISM (BY NUMBER) TO .SYL FILE 
+6) SHOW VISUALIZATION FOR PREVIOUS SOLVE 
+7) DISPLAY SYLLOGISM MEANINGS
 Choice: """) 
         try:
             n = int(stdin.readline())
@@ -300,10 +326,13 @@ Choice: """)
                 if not filename[i].isalpha():
                     if filename[i]=='.':
                         #print("testing first")
-                        if filename[i:i+4] == ".syl" or filename[i:i+4] == ".txt":
-                            found = True
-                            name = filename[:i+4]
-                            break 
+                        try: 
+                            if filename[i:i+4] == ".syl" or filename[i:i+4] == ".txt":
+                                found = True
+                                name = filename[:i+4]
+                                break 
+                        except: 
+                            pass 
 
             if not found:
                 stdout.write("Invalid input. \n\n")
@@ -497,6 +526,14 @@ Choice: """)
                 stdout.write("\n\n") 
             
         elif n==2:
+            stdout.write("Number of inputs: ") 
+            try:
+                n_in = int(stdin.readline())
+                if n_in<2: 1/0 
+            except:
+                stdout.write("Invalid input. \n\n")
+                continue
+
             #stdout.write("That's work in progress. \n\n")
             stdout.write("Syllogism number: ") 
             try:
@@ -506,13 +543,14 @@ Choice: """)
                 stdout.write("Invalid input. \n\n")
                 continue
 
-            stdout.write("Evaluating Syllogism "+str(n)+": \n")
+            stdout.write("\n\n") 
+            stdout.write("Evaluating "+str(n_in)+"-to-1 Chain Syllogism "+str(n)+": \n")
             stdout.write(caseGenerator.getPrintText(n))
             stdout.write("\n") 
             
-            t = caseGenerator.get_2to1_syllogism(n)
-            if not eval_single_syllogism(t[0], t[1]):
-                continue 
+            t = caseGenerator.get_nto1_syllogism(n_in, n)
+            eval_single_syllogism(t[0], t[1]) 
+                
         elif n==3:
             stdout.write("Number of input syllogisms: ")
             try:
@@ -546,7 +584,7 @@ Choice: """)
                         try:
                             temp = stdin.readline()
                             if temp.lower() == "quit":
-                                cancelled = true
+                                cancelled = True
                                 1/0 
                                 #break 
                             a, b = temp.split() 
@@ -600,7 +638,7 @@ Choice: """)
                         try:
                             temp = stdin.readline()
                             if temp.lower() == "quit":
-                                cancelled = true
+                                cancelled = True
                                 1/0 
                                 #break 
                             a, b = temp.split() 
@@ -628,7 +666,7 @@ Choice: """)
                 stdout.write("Quit operation. \n\n\n") 
                 continue
             
-            if not eval_single_syllogism(inputs, res_syllogism): continue 
+            eval_single_syllogism(inputs, res_syllogism) 
             
         
         elif n==4:
@@ -672,7 +710,7 @@ Choice: """)
                         try:
                             temp = stdin.readline()
                             if temp.lower() == "quit":
-                                cancelled = true
+                                cancelled = True
                                 1/0 
                                 #break 
                             a, b = temp.split() 
@@ -711,7 +749,7 @@ Choice: """)
                         try:
                             temp = stdin.readline()
                             if temp.lower() == "quit":
-                                cancelled = true
+                                cancelled = True
                                 1/0 
                                 #break 
                             res_varnames = temp.split() 
@@ -797,7 +835,20 @@ Choice: """)
                 stdout.write("\n")
 
             stdout.write("\n\n\n") 
-        elif n==5:
+        elif n==5: 
+            #stdout.write("That's work in progress. \n\n") 
+            pass 
+        elif n==6: 
+            # show solve 
+            if type(solve)==None: 
+                stdout.write("\nNo previous solve to show visualization for. \n\n") 
+                continue 
+                
+            if len(solve.shape) < 7: 
+                show_visualization(solve, varnames)
+            else: 
+                stdout.write("\nVisualization not supported for polysyllogisms with more than 4 variables.\n\n") 
+        elif n==7:
             stdout.write('''
 DEFINITIONS:
 

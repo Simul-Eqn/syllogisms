@@ -1,0 +1,5 @@
+number of in chain syllogisms, starting with 2-to-1: 
+30
+56
+90
+132

@@ -1,3 +1,3 @@
 # syllogisms
  syllogisms
-note: syllogismEvaluator - Presentation.py is just the one that doesn't have stuff for debugging 
+NOTE: pyvenn is someone else's github repository, downloaded here. In the folder is the full contents of it. 
