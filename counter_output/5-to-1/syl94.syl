@@ -1,0 +1,7 @@
+1 A B
+1 B C
+4 C D
+1 E D
+1 F E
+eval 1
+4 F A

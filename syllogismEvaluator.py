@@ -1,6 +1,8 @@
 import numpy as np
 from sys import stdin, stdout
-from pyvenn import venn 
+from pyvenn import venn
+import matplotlib.pyplot as plt 
+
 import caseGenerator
 
 # to make it global scope, for visualization 
@@ -264,7 +266,7 @@ def eval_res(solve, varnames, res_syllogism, errors, existances):
     
     return (res, antires) 
 
-def show_visualization(solve, varnames): 
+def show_visualization(solve, varnames, title): 
     labels = {}
 
     # add labels 
@@ -277,8 +279,67 @@ def show_visualization(solve, varnames):
         labels[key] = value 
 
     # get visualization 
-    fig, ax = venn.venn4(labels, varnames) 
-    fig.show() 
+    fig, ax = eval("venn.venn"+str(len(solve.shape))+"(labels, varnames)")
+    plt.title(title) 
+    plt.show(block=False) 
+
+
+def load_sylfile(name): 
+     # loads the input and res from syllogism file; once only. Separated by "eval #" 
+    try: 
+        sylfile = open(name, 'r')
+    except:
+        raise FileNotFoundError 
+    inputs = []
+    res_count = -1
+    getting_res = False
+    res_syllogisms = []
+    res_varnames = [] 
+    while True:
+        try:
+            line = sylfile.readline().split()
+            print(line) 
+            try:
+                syllogism = [int(line[0]), line[1], line[2]]
+                if getting_res:
+                    res_syllogisms.append([i for i in syllogism])
+                    res_count -= 1
+                    if res_count == 0: break 
+                else:
+                    inputs.append([i for i in syllogism])
+                    print("Appended to input") 
+            except:
+                if getting_res:
+                    res_count = -1
+                    break 
+                if line[0] == "eval":
+                    try:
+                        res_count = int(line[1])
+                        if res_count <= 0: 1/0
+                        #if res_count == 0: break 
+                        getting_res = True
+                        print("getting res") 
+                    except:
+                        if line[1] == "all":
+                            res_count = 0
+                            try:
+                                res_varnames = sylfile.readline().split()
+                                print("GOT VARNAMES") 
+                                break 
+                            except:
+                                res_count = -1
+                                break 
+                        else:
+                            #stdout.write("Invalid file format. \n\n")
+                            res_count = -1
+                        break
+        except:
+            #res_count = -1
+            break 
+
+    sylfile.close() 
+
+    return inputs, res_count, getting_res, res_syllogisms, res_varnames 
 
 
 
@@ -288,7 +349,7 @@ if __name__ == "__main__":
     while True:
         stdout.write(
     """MENU:
-1) AUTOTEST SYLLOGISM LIST 
+1) AUTOTEST SYLLOGISM LIST (1 SET OF INPUTS) 
 2) EVALUATE N-TO-1 CHAIN SYLLOGISM BY NUMBER 
 3) EVALUATE SYLLOGISM (MANUAL)
 4) GENERATE TRUE, FALSE, MAYBE SYLLOGISMS (MANUAL)
@@ -339,58 +400,11 @@ Choice: """)
                 continue 
 
             try: 
-                sylfile = open(name, 'r')
-            except:
-                stdout.write("File not found. \n\n")
+                inputs, res_count, getting_res, res_syllogisms, res_varnames = load_sylfile(name) 
+            except FileNotFoundError: 
+                stdout.write("File not found. \n\n") 
                 continue 
-            inputs = []
-            res_count = -1
-            getting_res = False
-            res_syllogisms = []
-            res_varnames = [] 
-            while True:
-                try:
-                    line = sylfile.readline().split()
-                    print(line) 
-                    try:
-                        syllogism = [int(line[0]), line[1], line[2]]
-                        if getting_res:
-                            res_syllogisms.append([i for i in syllogism])
-                            res_count -= 1
-                            if res_count == 0: break 
-                        else:
-                            inputs.append([i for i in syllogism])
-                            print("Appended to input") 
-                    except:
-                        if getting_res:
-                            res_count = -1
-                            break 
-                        if line[0] == "eval":
-                            try:
-                                res_count = int(line[1])
-                                if res_count <= 0: 1/0
-                                #if res_count == 0: break 
-                                getting_res = True
-                                print("getting res") 
-                            except:
-                                if line[1] == "all":
-                                    res_count = 0
-                                    try:
-                                        res_varnames = sylfile.readline().split()
-                                        print("GOT VARNAMES") 
-                                        break 
-                                    except:
-                                        res_count = -1
-                                        break 
-                                else:
-                                    #stdout.write("Invalid file format. \n\n")
-                                    res_count = -1
-                                break
-                except:
-                    #res_count = -1
-                    break 
-
-            sylfile.close() 
+           
             
             if res_count == -1:
                 stdout.write("Invalid file format. \n\n")
@@ -845,7 +859,7 @@ Choice: """)
                 continue 
                 
             if len(solve.shape) < 7: 
-                show_visualization(solve, varnames)
+                show_visualization(solve, varnames, "visualization of chain syllogism solving") 
             else: 
                 stdout.write("\nVisualization not supported for polysyllogisms with more than 4 variables.\n\n") 
         elif n==7:
